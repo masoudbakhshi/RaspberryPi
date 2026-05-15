@@ -20,7 +20,7 @@
 #   on any exit: normal stop, crash, remote kill, or SSH disconnect.
 #
 # Controller: PI
-#   ADC rate  : 50 SPS, 2-sample average -> ~25 Hz control loop
+#   ADC rate  : 2400 SPS, 5-sample average -> ~480 Hz control loop
 #   Kp        : proportional gain (react to current error)
 #   Ki        : integral gain (eliminate steady-state offset)
 #   Reference : entered by the user at startup (0.1 to 18.0 A)
@@ -67,7 +67,7 @@ INTEGRAL_CLAMP  = 35.0   # anti-windup (% duty)
 MAX_CURRENT_A   = 18.0   # ACS712 20A module, leaving 2A safety margin
 
 # ADC averaging
-AVERAGE_N = 2            # 2 samples at 50 SPS = 40ms per reading = ~25 Hz loop
+AVERAGE_N = 5            # 5 samples at 2400 SPS = ~2.1ms per reading = ~480 Hz loop
 
 # =============================================================================
 # Hardware setup
@@ -128,7 +128,7 @@ def ads_init():
     time.sleep(0.5)
     spi.xfer2([CMD_RESET])
     time.sleep(0.5)
-    _write_reg(REG_MODE2, 0x05)   # 50 SPS, gain 1x
+    _write_reg(REG_MODE2, 0x0A)   # 2400 SPS, gain 1x
     _write_reg(REG_INPMUX, 0x01)  # AIN0(+) vs AIN1(-)
     _write_reg(REG_REFMUX, 0x00)  # internal 2.5V reference
     spi.xfer2([CMD_START1])
@@ -177,7 +177,7 @@ def run_pid(zero_v, target_abs, initial_duty):
     t_prev  = time.time()
     t_start = t_prev
 
-    print(f"\nTarget: {target_abs:+.1f} A   Kp={Kp}  Ki={Ki}  PWM={PWM_FREQ} Hz  Loop~25 Hz")
+    print(f"\nTarget: {target_abs:+.1f} A   Kp={Kp}  Ki={Ki}  PWM={PWM_FREQ} Hz  Loop~480 Hz")
     print(f"{'Time':>6}  {'Current':>9}  {'Error':>7}  {'Duty':>6}  Bar")
     print("-" * 62)
 
@@ -221,7 +221,7 @@ print("  Masoud Bakhshi")
 print("=" * 62)
 
 ads_init()
-print("ADS1263 initialised at 50 SPS.\n")
+print("ADS1263 initialised at 2400 SPS.\n")
 
 # Zero-current calibration
 print("Calibrating (MOSFET OFF, no current)...")
