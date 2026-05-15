@@ -25,6 +25,7 @@ A collection of hands-on Raspberry Pi projects aimed at students and engineers w
 | # | Folder | Topic | Level |
 |--:|--------|-------|-------|
 | 01 | [01_Blink_LED](01_Blink_LED/) | GPIO output — blink an LED | Beginner |
+| 02 | [02_PWM_Dimming](02_PWM_Dimming/) | PWM — control LED brightness | Beginner–Intermediate |
 
 More projects are added over time as the series grows.
 

@@ -76,4 +76,5 @@ The script sets GPIO17 as an output pin, then enters an infinite loop. Each pass
 
 ## Related tutorials in this repo
 
-- `02_PWM_Dimming` — control LED brightness with hardware PWM *(coming soon)*
+- [`02_PWM_Dimming`](../02_PWM_Dimming/) — control LED brightness with PWM
+- `03_ACS712_Current_Sensor` — measure current through the LED *(coming soon)*
