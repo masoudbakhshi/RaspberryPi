@@ -1,4 +1,4 @@
-# 01 — Blink LED
+# 01: Blink LED
 
 **Author:** Masoud Bakhshi  
 **Level:** Beginner  
@@ -19,7 +19,7 @@ This is the simplest possible GPIO project. The Raspberry Pi toggles a pin betwe
 | Raspberry Pi (any model with 40-pin header) | Main board |
 | GeeekPi GPIO Screw Terminal HAT | Easy and safe wiring access to GPIO pins |
 | Standard LED (any color) | Visual output |
-| 330 Ω resistor (220–470 Ω works too) | Current limiting — protects the LED |
+| 330 ohm resistor (220 to 470 ohm works too) | Current limiting, protects the LED |
 | Two short wires | Connections |
 
 ---
@@ -28,28 +28,28 @@ This is the simplest possible GPIO project. The Raspberry Pi toggles a pin betwe
 
 ```
 RPi GPIO17 (pin 11)
-        │
-      [330 Ω]
-        │
-      LED (+) anode   ← longer leg
-      LED (−) cathode ← shorter leg
-        │
+        |
+      [330 ohm]
+        |
+      LED (+) anode   <- longer leg
+      LED (-) cathode <- shorter leg
+        |
       GND (pin 6)
 ```
 
-On the GeeekPi HAT, locate the screw terminals labeled **GPIO17** and **GND** — they sit right next to each other which makes wiring straightforward.
+On the GeeekPi HAT, locate the screw terminals labeled **GPIO17** and **GND**, which sit right next to each other and make wiring straightforward.
 
-> **Why a resistor?** The Pi's GPIO pins output 3.3 V and can safely source about 16 mA. A typical LED runs at 2 V / 10–20 mA. Without a resistor the current would be too high and could damage the pin or burn out the LED. The resistor drops the extra voltage and keeps current in a safe range.
+> **Why a resistor?** The Pi's GPIO pins output 3.3 V and can safely source about 16 mA. A typical LED runs at 2 V / 10 to 20 mA. Without a resistor the current would be too high and could damage the pin or burn out the LED. The resistor drops the extra voltage and keeps current in a safe range.
 
 ---
 
 ## How to run
 
-1. Make sure `lgpio` is installed — it ships by default on Raspberry Pi OS. If not:
+1. Make sure `lgpio` is installed; it ships by default on Raspberry Pi OS. If not:
    ```bash
    pip install lgpio
    ```
-   > **Note:** Do not use `RPi.GPIO` — it silently fails on Raspberry Pi OS kernel 6.x and newer. `lgpio` is the correct library for modern Pi OS.
+   > **Note:** Do not use `RPi.GPIO`; it silently fails on Raspberry Pi OS kernel 6.x and newer. `lgpio` is the correct library for modern Pi OS.
 
 2. Copy `blink_led.py` to your Pi and run it:
    ```bash
@@ -62,19 +62,19 @@ On the GeeekPi HAT, locate the screw terminals labeled **GPIO17** and **GND** �
 
 ## What happens in the code
 
-The script sets GPIO17 as an output pin, then enters an infinite loop. Each pass turns the pin HIGH (LED on), waits half a second, turns it LOW (LED off), and waits again. When you hit Ctrl+C, the `finally` block calls `GPIO.cleanup()` which resets the pin to its default input state — always do this at the end to leave the hardware in a clean state.
+The script sets GPIO17 as an output pin, then enters an infinite loop. Each pass turns the pin HIGH (LED on), waits half a second, turns it LOW (LED off), and waits again. When you hit Ctrl+C, the `finally` block writes LOW and closes the GPIO handle, leaving the hardware in a clean state.
 
 ---
 
 ## Things to try
 
 - Change `BLINK_ON` and `BLINK_OFF` at the top of the script to adjust the timing.
-- Use a different GPIO pin — just update `LED_PIN` and rewire accordingly.
-- Set `BLINK_ON = 0.02` and `BLINK_OFF = 0.02` to get 25 Hz flicker — the LED will look dimmer due to how human eyes perceive fast switching. This is the idea behind PWM dimming.
+- Use a different GPIO pin: just update `LED_PIN` and rewire accordingly.
+- Set `BLINK_ON = 0.02` and `BLINK_OFF = 0.02` to get 25 Hz flicker and the LED will look dimmer due to how human eyes perceive fast switching. This is the idea behind PWM dimming.
 
 ---
 
 ## Related tutorials in this repo
 
-- [`02_PWM_Dimming`](../02_PWM_Dimming/) — control LED brightness with PWM
-- `03_ACS712_Current_Sensor` — measure current through the LED *(coming soon)*
+- [`02_PWM_Dimming`](../02_PWM_Dimming/) controls LED brightness with PWM
+- [`03_ACS712_Current_Sensor`](../03_ACS712_Current_Sensor/) measures current through the LED with ACS712 and ADS1263

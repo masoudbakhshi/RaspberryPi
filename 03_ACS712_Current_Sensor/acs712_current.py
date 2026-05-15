@@ -1,27 +1,27 @@
 # =============================================================================
-# ACS712 Current Sensor via ADS1263 ADC HAT — Raspberry Pi Tutorial
+# ACS712 Current Sensor via ADS1263 ADC HAT: Raspberry Pi Tutorial
 # Author  : Masoud Bakhshi
 # Date    : 2026-05-15
 # Hardware: Raspberry Pi + Waveshare ADS1263 HAT + ACS712 20A module
-#           + GeeekPi Screw Terminal HAT + LED + 330 Ω resistor
+#           + GeeekPi Screw Terminal HAT + LED + 330 ohm resistor
 # =============================================================================
 #
 # Wiring overview:
-#   LED circuit  : GPIO27 → 330 Ω → LED(+) → LED(−) → ACS712 IP+ → ACS712 IP− → GND
-#   ACS712 power : ACS712 VCC → 5V (Pi pin 2) | ACS712 GND → GND (Pi pin 6)
-#   ACS712 signal: ACS712 OUT → ADS1263 AIN0 screw terminal
-#   2.5V reference: 10kΩ from 5V → AIN1 screw terminal → 10kΩ → GND
+#   LED circuit  : GPIO27 -> 330 ohm -> LED(+) -> LED(-) -> ACS712 IP+ -> ACS712 IP- -> GND
+#   ACS712 power : ACS712 VCC -> 5V (Pi pin 2) | ACS712 GND -> GND (Pi pin 6)
+#   ACS712 signal: ACS712 OUT -> ADS1263 AIN0 screw terminal
+#   2.5V reference: 10kΩ from 5V -> AIN1 screw terminal -> 10kΩ -> GND
 #
 # Why differential (AIN0 vs AIN1)?
-#   The ACS712 outputs 2.5 V at zero current — exactly equal to the ADS1263's
-#   internal 2.5 V reference. Measuring single-ended would saturate the ADC.
-#   Subtracting a 2.5 V reference (created by the voltage divider on AIN1)
-#   leaves only the current-proportional deviation: ±100 mV per ±1 A.
+#   The ACS712 outputs 2.5V at zero current, which equals the ADS1263 internal
+#   2.5V reference. Measuring single-ended would saturate the ADC at zero current.
+#   A voltage divider on AIN1 creates a 2.5V reference so the differential
+#   reading is 0V at zero current and scales with actual current flow.
 #
 # ADS1263 GPIO pins used by the Waveshare HAT:
-#   RST   → GPIO18 (pin 12)
-#   DRDY  → GPIO17 (pin 11)  ← do NOT use GPIO17 for anything else
-#   SPI0  → GPIO8/9/10/11 (CE0, MISO, MOSI, SCLK)
+#   RST   -> GPIO18 (pin 12)
+#   DRDY  -> GPIO17 (pin 11) -- do NOT use GPIO17 for anything else
+#   SPI0  -> GPIO8/9/10/11 (CE0, MISO, MOSI, SCLK)
 #
 # ACS712 20A sensitivity: 100 mV/A
 # =============================================================================
@@ -30,29 +30,29 @@ import spidev
 import lgpio
 import time
 
-# --- Hardware pins ---
+# Hardware pins
 RST_PIN  = 18   # ADS1263 reset (output)
 DRDY_PIN = 17   # ADS1263 data ready (input, active LOW)
-LED_PIN  = 27   # LED control (GPIO27 — GPIO17 is taken by DRDY)
+LED_PIN  = 27   # LED control (GPIO27, because GPIO17 is taken by DRDY)
 
-# --- ADS1263 SPI ---
+# ADS1263 SPI
 SPI_BUS    = 0
 SPI_DEVICE = 0        # CE0 = GPIO8
 SPI_SPEED  = 2000000  # 2 MHz
 
-# --- ADS1263 commands ---
+# ADS1263 commands
 CMD_RESET  = 0x06
 CMD_START1 = 0x08
 CMD_STOP1  = 0x0A
 CMD_RDATA1 = 0x12
 CMD_WREG   = 0x40
 
-# --- ADS1263 registers ---
+# ADS1263 registers
 REG_MODE2  = 0x04   # PGA gain and data rate
 REG_INPMUX = 0x05   # input channel multiplexer
 REG_REFMUX = 0x0E   # reference source
 
-# --- ACS712 20A parameters ---
+# ACS712 20A parameters
 SENSITIVITY = 0.100  # V/A (100 mV per amp)
 VREF        = 2.5    # ADS1263 internal reference voltage
 
@@ -80,7 +80,7 @@ def _wait_drdy(timeout=3.0):
     while lgpio.gpio_read(h, DRDY_PIN) == 1:
         if time.time() - t0 > timeout:
             raise TimeoutError(
-                "ADS1263 DRDY timeout — check that the HAT is seated and SPI is enabled"
+                "ADS1263 DRDY timeout. Check that the HAT is seated and SPI is enabled."
             )
         time.sleep(0.0001)
 
@@ -96,7 +96,6 @@ def _read_adc1_raw():
 
 
 def ads_init():
-    # Hardware reset
     lgpio.gpio_write(h, RST_PIN, 0)
     time.sleep(0.01)
     lgpio.gpio_write(h, RST_PIN, 1)
@@ -108,10 +107,10 @@ def ads_init():
     # 20 SPS, PGA gain = 1x
     _write_reg(REG_MODE2, 0x04)
 
-    # Differential: AIN0(+) vs AIN1(−)
+    # Differential: AIN0(+) vs AIN1(-)
     _write_reg(REG_INPMUX, 0x01)
 
-    # Internal 2.5 V reference
+    # Internal 2.5V reference
     _write_reg(REG_REFMUX, 0x00)
 
     # Start continuous conversions
@@ -141,27 +140,28 @@ def cleanup():
 # =============================================================================
 
 print("=" * 50)
-print("  ACS712 Current Sensor — Masoud Bakhshi")
+print("  ACS712 Current Sensor")
+print("  Masoud Bakhshi")
 print("=" * 50)
 
 ads_init()
 print("ADS1263 initialised.\n")
 
-# --- Calibrate zero-current baseline ---
+# Calibrate zero-current baseline
 print("Calibrating zero-current baseline...")
 print("Make sure NO current is flowing through the ACS712 (LED should be OFF).")
 time.sleep(2)
 
 samples = [read_voltage() for _ in range(20)]
 zero_v = sum(samples) / len(samples)
-print(f"Zero-current reference voltage : {zero_v * 1000:.2f} mV")
-print(f"(Ideal is ~0 mV differential — any offset is from component tolerance)\n")
+print(f"Zero-current reference voltage: {zero_v * 1000:.2f} mV")
+print(f"(Ideal is ~0 mV differential; any offset is from component tolerance)\n")
 
-# --- Measure current in a loop ---
-print("Turning LED ON — measuring current through the circuit.")
+# Measure current
+print("Turning LED ON, measuring current through the circuit.")
 print("Press Ctrl+C to stop.\n")
 
-lgpio.gpio_write(h, LED_PIN, 1)   # LED on
+lgpio.gpio_write(h, LED_PIN, 1)
 time.sleep(0.2)
 
 try:
