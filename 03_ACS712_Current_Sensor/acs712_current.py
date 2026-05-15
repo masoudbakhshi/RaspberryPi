@@ -174,9 +174,11 @@ try:
     while True:
         current_A  = read_current_A(zero_v)
         current_mA = current_A * 1000
-        bar_scale = max(1, int(abs(current_mA) / 30))  # auto-scale bar for mA or A range
-        bar = '█' * min(int(abs(current_mA) / bar_scale), 30)
-        print(f"\rCurrent: {current_mA:+7.2f} mA  {bar:<30}", end="", flush=True)
+        bar = '█' * min(int(abs(current_A) * 4), 30)
+        if abs(current_A) >= 1.0:
+            print(f"\rCurrent: {current_A:+7.3f} A    {bar:<30}", end="", flush=True)
+        else:
+            print(f"\rCurrent: {current_mA:+7.2f} mA  {bar:<30}", end="", flush=True)
         time.sleep(0.1)
 
 except KeyboardInterrupt:
