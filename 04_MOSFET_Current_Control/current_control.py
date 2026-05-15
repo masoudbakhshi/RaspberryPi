@@ -60,7 +60,7 @@ VREF        = 2.5    # ADS1263 internal reference
 # PI controller parameters
 TARGET_A   =  1.0   # target current magnitude in amps
 Kp         = 15.0   # proportional gain
-Ki         =  2.0   # integral gain
+Ki         =  5.0   # integral gain
 INTEGRAL_CLAMP = 40.0  # anti-windup clamp (% duty)
 
 # =============================================================================
