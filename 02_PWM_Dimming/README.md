@@ -88,4 +88,4 @@ Stop with **Ctrl+C**.
 ## Related tutorials in this repo
 
 - [`01_Blink_LED`](../01_Blink_LED/) — GPIO digital output basics
-- `03_ACS712_Current_Sensor` — measure the current through the LED *(coming soon)*
+- [`03_ACS712_Current_Sensor`](../03_ACS712_Current_Sensor/) — measure current through the LED with ACS712 + ADS1263

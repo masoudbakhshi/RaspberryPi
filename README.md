@@ -26,6 +26,7 @@ A collection of hands-on Raspberry Pi projects aimed at students and engineers w
 |--:|--------|-------|-------|
 | 01 | [01_Blink_LED](01_Blink_LED/) | GPIO output — blink an LED | Beginner |
 | 02 | [02_PWM_Dimming](02_PWM_Dimming/) | PWM — control LED brightness | Beginner–Intermediate |
+| 03 | [03_ACS712_Current_Sensor](03_ACS712_Current_Sensor/) | ACS712 + ADS1263 — measure current over SPI | Intermediate |
 
 More projects are added over time as the series grows.
 
