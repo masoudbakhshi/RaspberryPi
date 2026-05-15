@@ -157,4 +157,4 @@ The 32-bit ADS1263 resolves changes of ~1.16 nV, which is far more resolution th
 
 - [`01_Blink_LED`](../01_Blink_LED/) covers GPIO digital output basics
 - [`02_PWM_Dimming`](../02_PWM_Dimming/) covers PWM LED brightness control
-- `04_MOSFET_Switch` covers switching a 12V halogen load with the D4184 MOSFET *(coming soon)*
+- [`04_MOSFET_Current_Control`](../04_MOSFET_Current_Control/) covers closed-loop PI current control with D4184 MOSFET and ACS712 feedback

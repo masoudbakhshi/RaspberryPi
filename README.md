@@ -27,6 +27,7 @@ A collection of hands-on Raspberry Pi projects aimed at students and engineers w
 | 01 | [01_Blink_LED](01_Blink_LED/) | GPIO output, blinking an LED | Beginner |
 | 02 | [02_PWM_Dimming](02_PWM_Dimming/) | PWM for LED brightness control | Beginner to Intermediate |
 | 03 | [03_ACS712_Current_Sensor](03_ACS712_Current_Sensor/) | ACS712 current sensing via ADS1263 over SPI | Intermediate |
+| 04 | [04_MOSFET_Current_Control](04_MOSFET_Current_Control/) | Closed-loop PI current controller with D4184 MOSFET | Intermediate to Advanced |
 
 More projects are added over time as the series grows.
 
