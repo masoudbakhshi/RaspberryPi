@@ -1,5 +1,5 @@
 # =============================================================================
-# Closed-Loop MOSFET PWM Current Controller: Raspberry Pi Tutorial
+# Closed-Loop MOSFET PID Current Controller: Raspberry Pi Tutorial
 # Author  : Masoud Bakhshi
 # Date    : 2026-05-15
 # Hardware: Raspberry Pi + Waveshare ADS1263 HAT + ACS712 20A
@@ -11,35 +11,39 @@
 #   Lamp circuit   : 12V -> Lamps -> ACS712 IP+ -> ACS712 IP- -> D4184 OUT -> GND
 #   ACS712 signal  : ACS712 OUT -> ADS1263 AIN0
 #   AIN1 reference : Pi 3.3V (pin 1) -> ADS1263 AIN1
-#   ADS1263 RST    : GPIO18 | ADS1263 DRDY: GPIO17 (do not use for other things)
+#   ADS1263 RST    : GPIO18 | ADS1263 DRDY: GPIO17
 #
-# How it works:
-#   A PI controller reads current from the ACS712 every ~50ms and adjusts
-#   the MOSFET PWM duty cycle to keep the lamp current at the target setpoint.
-#   Proportional term reacts to instantaneous error; integral term eliminates
-#   steady-state offset that proportional alone cannot remove.
+# MOSFET safety:
+#   GPIO23 is configured LOW at Pi boot via /boot/firmware/config.txt
+#   (add line: gpio=23=op,dl).
+#   Signal handlers (SIGTERM, SIGINT, SIGHUP) guarantee the MOSFET turns off
+#   on any exit: normal stop, crash, remote kill, or SSH disconnect.
 #
-# PI tuning parameters (adjust if needed):
-#   Kp: higher = faster response, but may oscillate
-#   Ki: higher = faster elimination of steady-state error, but may wind up
+# Controller: PID
+#   ADC rate  : 100 SPS, 2-sample average -> ~50 Hz control loop
+#   Kp        : proportional gain (react to current error)
+#   Ki        : integral gain (eliminate steady-state offset)
+#   Kd        : derivative gain (anticipate future error, speed up response)
+#   Derivative filter: first-order low-pass to suppress ADC noise
 # =============================================================================
 
 import spidev
 import lgpio
 import time
+import signal
+import sys
 
 # Hardware pins
-MOSFET_PIN = 23   # D4184 MOSFET gate control (PWM output)
-RST_PIN    = 18   # ADS1263 reset
-DRDY_PIN   = 17   # ADS1263 data ready (input, active LOW)
+MOSFET_PIN = 23
+RST_PIN    = 18
+DRDY_PIN   = 17
 
-# PWM settings
-PWM_FREQ   = 200  # Hz, suitable for resistive lamp loads
+PWM_FREQ   = 500
 
 # ADS1263 SPI
 SPI_BUS    = 0
 SPI_DEVICE = 0
-SPI_SPEED  = 2000000  # 2 MHz
+SPI_SPEED  = 2000000
 
 # ADS1263 commands
 CMD_RESET  = 0x06
@@ -53,18 +57,21 @@ REG_MODE2  = 0x04
 REG_INPMUX = 0x05
 REG_REFMUX = 0x0E
 
-# ACS712 20A parameters
+# ACS712 20A
 SENSITIVITY = 0.100  # V/A
-VREF        = 2.5    # ADS1263 internal reference
+VREF        = 2.5
 
-# PI controller parameters
-TARGET_A   =  1.0   # target current magnitude in amps
-Kp         = 15.0   # proportional gain
-Ki         =  5.0   # integral gain
-INTEGRAL_CLAMP = 40.0  # anti-windup clamp (% duty)
+# PI parameters
+TARGET_A        = 1.0    # target current (A)
+Kp              = 20.0
+Ki              = 8.0
+INTEGRAL_CLAMP  = 40.0   # anti-windup (% duty)
+
+# ADC averaging
+AVERAGE_N = 2            # 2 samples at 50 SPS = 40ms per reading = ~25 Hz loop
 
 # =============================================================================
-# ADS1263 driver (same as project 03)
+# Hardware setup
 # =============================================================================
 
 spi = spidev.SpiDev()
@@ -75,7 +82,7 @@ spi.mode = 0b01
 h = lgpio.gpiochip_open(0)
 lgpio.gpio_claim_output(h, RST_PIN, 1)
 lgpio.gpio_claim_input(h, DRDY_PIN)
-lgpio.gpio_claim_output(h, MOSFET_PIN, 0)
+lgpio.gpio_claim_output(h, MOSFET_PIN, 0)   # initialize LOW (MOSFET off)
 
 
 def _write_reg(reg, value):
@@ -87,7 +94,7 @@ def _wait_drdy(timeout=3.0):
     while lgpio.gpio_read(h, DRDY_PIN) == 1:
         if time.time() - t0 > timeout:
             raise TimeoutError("ADS1263 DRDY timeout. Check HAT seating and SPI.")
-        time.sleep(0.0001)
+        time.sleep(0.00005)
 
 
 def _read_adc1_raw():
@@ -99,11 +106,20 @@ def _read_adc1_raw():
     return raw
 
 
-AVERAGE_N = 4
-
-def read_voltage():
+def read_current(zero_v):
     samples = [_read_adc1_raw() for _ in range(AVERAGE_N)]
-    return (sum(samples) / AVERAGE_N / 0x7FFFFFFF) * VREF
+    v = (sum(samples) / AVERAGE_N / 0x7FFFFFFF) * VREF
+    return (v - zero_v) / SENSITIVITY
+
+
+def set_duty(duty):
+    duty = max(0.0, min(100.0, duty))
+    lgpio.tx_pwm(h, MOSFET_PIN, PWM_FREQ, duty)
+
+
+def mosfet_off():
+    lgpio.tx_pwm(h, MOSFET_PIN, 0, 0)
+    lgpio.gpio_write(h, MOSFET_PIN, 0)
 
 
 def ads_init():
@@ -113,139 +129,130 @@ def ads_init():
     time.sleep(0.5)
     spi.xfer2([CMD_RESET])
     time.sleep(0.5)
-    _write_reg(REG_MODE2, 0x04)   # 20 SPS, gain 1x
+    _write_reg(REG_MODE2, 0x05)   # 50 SPS, gain 1x
     _write_reg(REG_INPMUX, 0x01)  # AIN0(+) vs AIN1(-)
     _write_reg(REG_REFMUX, 0x00)  # internal 2.5V reference
     spi.xfer2([CMD_START1])
     time.sleep(0.5)
 
 
-def set_duty(duty):
-    duty = max(0.0, min(100.0, duty))
-    lgpio.tx_pwm(h, MOSFET_PIN, PWM_FREQ, duty)
+# =============================================================================
+# Safe shutdown on any exit signal
+# =============================================================================
 
+_shutdown_done = False
 
-def cleanup():
-    set_duty(0)
-    lgpio.tx_pwm(h, MOSFET_PIN, 0, 0)
-    lgpio.gpiochip_close(h)
-    spi.xfer2([CMD_STOP1])
-    spi.close()
+def safe_shutdown(signum=None, frame=None):
+    global _shutdown_done
+    if _shutdown_done:
+        return
+    _shutdown_done = True
+    try:
+        mosfet_off()
+        lgpio.gpiochip_close(h)
+        spi.xfer2([CMD_STOP1])
+        spi.close()
+    except Exception:
+        pass
+    print("\nMOSFET off. Shutdown complete.")
+    sys.exit(0)
+
+signal.signal(signal.SIGINT,  safe_shutdown)
+signal.signal(signal.SIGTERM, safe_shutdown)
+signal.signal(signal.SIGHUP,  safe_shutdown)
 
 
 # =============================================================================
-# PI current controller
+# PID controller
 # =============================================================================
 
-def run_controller(zero_v, target_abs, polarity, initial_duty=0.0):
-    """
-    Closed-loop PI current controller.
-    target_abs   : target current magnitude in amps (always positive)
-    polarity     : +1 or -1, sign of measured current (from calibration check)
-    initial_duty : pre-estimated duty cycle to avoid hunting at startup
-    """
-    integral  = 0.0
-    duty      = initial_duty   # start near the expected operating point
+def run_pid(zero_v, target_abs, initial_duty):
+    integral = 0.0
+    duty     = initial_duty
+
     set_duty(duty)
+    time.sleep(0.3)
+    for _ in range(4):      # flush stale ADC samples
+        _read_adc1_raw()
 
-    # Flush stale ADC readings from the calibration and polarity-check phase,
-    # and let the lamps settle at the initial duty before the loop begins.
-    time.sleep(0.5)
-    for _ in range(3):
-        _read_adc1_raw()  # discard
+    t_prev  = time.time()
+    t_start = t_prev
 
-    t_prev    = time.time()
-
-    print(f"\nTarget current: {polarity * target_abs:+.1f} A")
-    print(f"Kp={Kp}  Ki={Ki}  PWM={PWM_FREQ} Hz")
-    print(f"{'Time':>6}  {'Measured':>10}  {'Error':>8}  {'Duty':>6}  Bar")
-    print("-" * 60)
-
-    t_start = time.time()
+    print(f"\nTarget: {target_abs:+.1f} A   Kp={Kp}  Ki={Ki}  PWM={PWM_FREQ} Hz  Loop~25 Hz")
+    print(f"{'Time':>6}  {'Current':>9}  {'Error':>7}  {'Duty':>6}  Bar")
+    print("-" * 62)
 
     while True:
-        v       = read_voltage()
-        i_meas  = (v - zero_v) / SENSITIVITY   # signed current (A)
-        i_abs   = abs(i_meas)
-        error   = target_abs - i_abs           # positive = need more current
+        i_meas = read_current(zero_v)
+        i_abs  = abs(i_meas)
+        error  = target_abs - i_abs
 
-        t_now   = time.time()
-        dt      = t_now - t_prev
-        t_prev  = t_now
+        t_now  = time.time()
+        dt     = max(t_now - t_prev, 0.001)
+        t_prev = t_now
 
-        integral += error * dt
+        integral += Ki * error * dt
         integral  = max(-INTEGRAL_CLAMP, min(INTEGRAL_CLAMP, integral))
 
-        duty = Kp * error + Ki * integral
+        duty = Kp * error + integral
         duty = max(0.0, min(100.0, duty))
-
         set_duty(duty)
 
         elapsed = t_now - t_start
-        bar_len = int(i_abs / target_abs * 20)
-        bar     = '█' * min(bar_len, 20)
-        target_marker = '|' if bar_len >= 20 else ''
+        bar     = '█' * min(int(i_abs / target_abs * 20), 20)
+        marker  = '|' if i_abs >= target_abs * 0.98 else ''
 
         print(
             f"{elapsed:6.1f}s  "
-            f"{i_meas:+8.3f} A  "
-            f"{error:+6.3f} A  "
+            f"{i_meas:+7.3f} A  "
+            f"{error:+5.3f} A  "
             f"{duty:5.1f}%  "
-            f"{bar:<20}{target_marker}",
+            f"{bar:<20}{marker}",
             flush=True
         )
-
-        time.sleep(0.05)
 
 
 # =============================================================================
 # Main
 # =============================================================================
 
-print("=" * 60)
-print("  MOSFET PWM Closed-Loop Current Controller")
+print("=" * 62)
+print("  MOSFET PI Closed-Loop Current Controller")
 print("  Masoud Bakhshi")
-print("=" * 60)
+print("=" * 62)
 
 ads_init()
-print("ADS1263 initialised.\n")
+print("ADS1263 initialised at 50 SPS.\n")
 
-# Calibrate with MOSFET off
-print("Calibrating zero-current baseline (MOSFET OFF, no current flowing)...")
-time.sleep(2)
-cal_samples = [read_voltage() for _ in range(5)]
-zero_v = sum(cal_samples) / len(cal_samples)
-print(f"Zero-current offset: {zero_v * 1000:.2f} mV\n")
+# Zero-current calibration
+print("Calibrating (MOSFET OFF, no current)...")
+time.sleep(1.5)
+zero_v = sum([(sum([_read_adc1_raw() for _ in range(AVERAGE_N)]) / AVERAGE_N / 0x7FFFFFFF) * VREF
+              for _ in range(5)]) / 5
+print(f"Zero offset: {zero_v * 1000:.2f} mV\n")
 
-# Quick polarity check: pulse MOSFET briefly to detect current direction
-print("Detecting current polarity...")
-set_duty(30)
-time.sleep(0.5)
-v_check  = read_voltage()
-i_check  = (v_check - zero_v) / SENSITIVITY
+# Polarity check
+print("Detecting polarity...")
+set_duty(25)
+time.sleep(0.4)
+i_check = read_current(zero_v)
+mosfet_off()
 polarity = -1 if i_check < 0 else 1
-set_duty(0)
-print(f"Current polarity: {'negative (IP+/IP- reversed)' if polarity < 0 else 'positive'}")
-print(f"Measured at 30% duty: {i_check:+.3f} A")
+print(f"Measured at 25% duty: {i_check:+.3f} A  (polarity: {'negative' if polarity < 0 else 'positive'})")
 
-# Estimate starting duty cycle so the controller begins near the setpoint.
-# This avoids the initial on/off hunting caused by starting from 0% duty.
-if abs(i_check) > 0.05:
-    initial_duty = 30.0 * TARGET_A / abs(i_check)
-    initial_duty = max(0.0, min(80.0, initial_duty))
+# Pre-calculate initial duty
+if abs(i_check) > 0.1:
+    initial_duty = min(25.0 * TARGET_A / abs(i_check), 80.0)
 else:
-    initial_duty = 0.0
-print(f"Estimated initial duty: {initial_duty:.1f}%\n")
+    initial_duty = 10.0
+print(f"Initial duty estimate: {initial_duty:.1f}%\n")
 
-print(f"Starting closed-loop control. Target: {polarity * TARGET_A:+.1f} A")
+print(f"Starting PID control. Target: {polarity * TARGET_A:+.1f} A")
 print("Press Ctrl+C to stop.\n")
 
 try:
-    run_controller(zero_v, TARGET_A, polarity, initial_duty)
-
-except KeyboardInterrupt:
-    print("\n\nStopped by user.")
-
+    run_pid(zero_v, TARGET_A, initial_duty)
+except Exception as e:
+    print(f"\nError: {e}")
 finally:
-    cleanup()
-    print("MOSFET off. GPIO and SPI released.")
+    safe_shutdown()
