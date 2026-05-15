@@ -87,10 +87,13 @@ def _wait_drdy(timeout=3.0):
 
 def _read_adc1_raw():
     _wait_drdy()
-    spi.writebytes([CMD_RDATA1])
-    data = spi.readbytes(5)   # STATUS(1) + DATA(4)
-    raw = (data[1] << 24) | (data[2] << 16) | (data[3] << 8) | data[4]
-    if raw >= 0x80000000:     # two's complement for negative values
+    # Single xfer2 keeps CS low for the full command + response.
+    # writebytes/readbytes would toggle CS between them and cancel the command.
+    data = spi.xfer2([CMD_RDATA1, 0x00, 0x00, 0x00, 0x00, 0x00])
+    # data[0] = don't care (during command byte)
+    # data[1] = STATUS, data[2..5] = 32-bit ADC value MSB first
+    raw = (data[2] << 24) | (data[3] << 16) | (data[4] << 8) | data[5]
+    if raw >= 0x80000000:
         raw -= 0x100000000
     return raw
 
@@ -118,9 +121,12 @@ def ads_init():
     time.sleep(0.5)
 
 
+AVERAGE_N = 4    # number of samples to average per reading
+
 def read_voltage():
-    raw = _read_adc1_raw()
-    return (raw / 0x7FFFFFFF) * VREF
+    samples = [_read_adc1_raw() for _ in range(AVERAGE_N)]
+    raw_avg = sum(samples) / AVERAGE_N
+    return (raw_avg / 0x7FFFFFFF) * VREF
 
 
 def read_current_A(zero_voltage):
@@ -152,7 +158,7 @@ print("Calibrating zero-current baseline...")
 print("Make sure NO current is flowing through the ACS712 (LED should be OFF).")
 time.sleep(2)
 
-samples = [read_voltage() for _ in range(20)]
+samples = [read_voltage() for _ in range(5)]
 zero_v = sum(samples) / len(samples)
 print(f"Zero-current reference voltage: {zero_v * 1000:.2f} mV")
 print(f"(Ideal is ~0 mV differential; any offset is from component tolerance)\n")
@@ -168,7 +174,8 @@ try:
     while True:
         current_A  = read_current_A(zero_v)
         current_mA = current_A * 1000
-        bar = '█' * min(int(abs(current_mA) / 1), 30)
+        bar_scale = max(1, int(abs(current_mA) / 30))  # auto-scale bar for mA or A range
+        bar = '█' * min(int(abs(current_mA) / bar_scale), 30)
         print(f"\rCurrent: {current_mA:+7.2f} mA  {bar:<30}", end="", flush=True)
         time.sleep(0.1)
 
