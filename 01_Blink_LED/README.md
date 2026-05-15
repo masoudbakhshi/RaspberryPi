@@ -45,10 +45,11 @@ On the GeeekPi HAT, locate the screw terminals labeled **GPIO17** and **GND** �
 
 ## How to run
 
-1. Make sure `RPi.GPIO` is installed — it's included by default on Raspberry Pi OS. If not:
+1. Make sure `lgpio` is installed — it ships by default on Raspberry Pi OS. If not:
    ```bash
-   pip install RPi.GPIO
+   pip install lgpio
    ```
+   > **Note:** Do not use `RPi.GPIO` — it silently fails on Raspberry Pi OS kernel 6.x and newer. `lgpio` is the correct library for modern Pi OS.
 
 2. Copy `blink_led.py` to your Pi and run it:
    ```bash

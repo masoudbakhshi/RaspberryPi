@@ -9,32 +9,33 @@
 #   GPIO17 (pin 11) → 330 Ω resistor → LED anode (+, long leg)
 #   LED cathode (−, short leg) → GND (pin 6)
 #
-# The screw terminal on the GeeekPi HAT labeled GPIO17 connects directly
-# to BCM pin 17. Use the GND terminal next to it to complete the circuit.
+# Note: uses lgpio — the native GPIO library for Raspberry Pi OS kernel 6.x+.
+#       RPi.GPIO is outdated and silently fails on newer kernels.
 # =============================================================================
 
-import RPi.GPIO as GPIO
+import lgpio
 import time
 
-LED_PIN = 17        # BCM numbering — matches GPIO17 label on GeeekPi HAT
-BLINK_ON  = 0.5    # seconds the LED stays on
-BLINK_OFF = 0.5    # seconds the LED stays off
+LED_PIN   = 17    # BCM numbering — GPIO17
+BLINK_ON  = 0.5  # seconds LED stays on
+BLINK_OFF = 0.5  # seconds LED stays off
 
-GPIO.setmode(GPIO.BCM)
-GPIO.setup(LED_PIN, GPIO.OUT)
+h = lgpio.gpiochip_open(0)
+lgpio.gpio_claim_output(h, LED_PIN)
 
 print("Blinking LED on GPIO17 — press Ctrl+C to stop")
 
 try:
     while True:
-        GPIO.output(LED_PIN, GPIO.HIGH)
+        lgpio.gpio_write(h, LED_PIN, 1)
         time.sleep(BLINK_ON)
-        GPIO.output(LED_PIN, GPIO.LOW)
+        lgpio.gpio_write(h, LED_PIN, 0)
         time.sleep(BLINK_OFF)
 
 except KeyboardInterrupt:
     print("\nStopped by user.")
 
 finally:
-    GPIO.cleanup()   # always reset pin state on exit
-    print("GPIO cleaned up.")
+    lgpio.gpio_write(h, LED_PIN, 0)
+    lgpio.gpiochip_close(h)
+    print("GPIO released.")
