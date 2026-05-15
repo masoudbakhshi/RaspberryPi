@@ -137,14 +137,23 @@ def cleanup():
 # PI current controller
 # =============================================================================
 
-def run_controller(zero_v, target_abs, polarity):
+def run_controller(zero_v, target_abs, polarity, initial_duty=0.0):
     """
     Closed-loop PI current controller.
-    target_abs : target current magnitude in amps (always positive)
-    polarity   : +1 or -1, sign of measured current (from calibration check)
+    target_abs   : target current magnitude in amps (always positive)
+    polarity     : +1 or -1, sign of measured current (from calibration check)
+    initial_duty : pre-estimated duty cycle to avoid hunting at startup
     """
     integral  = 0.0
-    duty      = 0.0
+    duty      = initial_duty   # start near the expected operating point
+    set_duty(duty)
+
+    # Flush stale ADC readings from the calibration and polarity-check phase,
+    # and let the lamps settle at the initial duty before the loop begins.
+    time.sleep(0.5)
+    for _ in range(3):
+        _read_adc1_raw()  # discard
+
     t_prev    = time.time()
 
     print(f"\nTarget current: {polarity * target_abs:+.1f} A")
@@ -217,13 +226,22 @@ i_check  = (v_check - zero_v) / SENSITIVITY
 polarity = -1 if i_check < 0 else 1
 set_duty(0)
 print(f"Current polarity: {'negative (IP+/IP- reversed)' if polarity < 0 else 'positive'}")
-print(f"Measured at 30% duty: {i_check:+.3f} A\n")
+print(f"Measured at 30% duty: {i_check:+.3f} A")
+
+# Estimate starting duty cycle so the controller begins near the setpoint.
+# This avoids the initial on/off hunting caused by starting from 0% duty.
+if abs(i_check) > 0.05:
+    initial_duty = 30.0 * TARGET_A / abs(i_check)
+    initial_duty = max(0.0, min(80.0, initial_duty))
+else:
+    initial_duty = 0.0
+print(f"Estimated initial duty: {initial_duty:.1f}%\n")
 
 print(f"Starting closed-loop control. Target: {polarity * TARGET_A:+.1f} A")
 print("Press Ctrl+C to stop.\n")
 
 try:
-    run_controller(zero_v, TARGET_A, polarity)
+    run_controller(zero_v, TARGET_A, polarity, initial_duty)
 
 except KeyboardInterrupt:
     print("\n\nStopped by user.")
