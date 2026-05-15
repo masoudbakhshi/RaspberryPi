@@ -93,20 +93,28 @@ python3 current_control.py
 ```
 
 The script will:
-1. Calibrate the zero-current baseline (keep lamps off for 2 seconds)
+1. Calibrate the zero-current baseline (keep lamps off for 1.5 seconds)
 2. Pulse the MOSFET briefly to detect current polarity
-3. Start the PI control loop targeting 1A
+3. Ask you to enter the reference current in amps
+4. Start the PI control loop and hold the current at your setpoint
+
+```
+Enter reference current in amps (0.1 to 18.0): 1.5
+```
 
 Live output format:
 ```
- Time    Measured     Error    Duty   Bar
+  Time    Current    Error    Duty  Bar
 --------------------------------------------------------------
-  1.2s   -0.312 A   +0.688 A  20.3%  ██████
-  1.4s   -0.751 A   +0.249 A  25.7%  ███████████████
-  1.6s   -0.998 A   +0.002 A  27.1%  ████████████████████
+   0.4s   +0.000 A  +1.500 A  30.0%
+   5.2s   +0.872 A  +0.628 A  15.3%  ████████████
+  10.0s   +1.498 A  +0.002 A  19.1%  ███████████████████ |
+  12.0s   +1.501 A  -0.001 A  18.9%  ████████████████████|
 ```
 
 Stop with **Ctrl+C**. The MOSFET turns off immediately on exit.
+
+Valid range: **0.1 A to 18.0 A** (ACS712 20A sensor with 2A safety margin).
 
 ---
 

@@ -1,5 +1,5 @@
 # =============================================================================
-# Closed-Loop MOSFET PID Current Controller: Raspberry Pi Tutorial
+# Closed-Loop MOSFET PI Current Controller: Raspberry Pi Tutorial
 # Author  : Masoud Bakhshi
 # Date    : 2026-05-15
 # Hardware: Raspberry Pi + Waveshare ADS1263 HAT + ACS712 20A
@@ -19,12 +19,11 @@
 #   Signal handlers (SIGTERM, SIGINT, SIGHUP) guarantee the MOSFET turns off
 #   on any exit: normal stop, crash, remote kill, or SSH disconnect.
 #
-# Controller: PID
-#   ADC rate  : 100 SPS, 2-sample average -> ~50 Hz control loop
+# Controller: PI
+#   ADC rate  : 50 SPS, 2-sample average -> ~25 Hz control loop
 #   Kp        : proportional gain (react to current error)
 #   Ki        : integral gain (eliminate steady-state offset)
-#   Kd        : derivative gain (anticipate future error, speed up response)
-#   Derivative filter: first-order low-pass to suppress ADC noise
+#   Reference : entered by the user at startup (0.1 to 18.0 A)
 # =============================================================================
 
 import spidev
@@ -62,10 +61,10 @@ SENSITIVITY = 0.100  # V/A
 VREF        = 2.5
 
 # PI parameters
-TARGET_A        = 1.0    # target current (A)
-Kp              = 20.0
-Ki              = 8.0
-INTEGRAL_CLAMP  = 40.0   # anti-windup (% duty)
+Kp              = 8.0
+Ki              = 4.0
+INTEGRAL_CLAMP  = 35.0   # anti-windup (% duty)
+MAX_CURRENT_A   = 18.0   # ACS712 20A module, leaving 2A safety margin
 
 # ADC averaging
 AVERAGE_N = 2            # 2 samples at 50 SPS = 40ms per reading = ~25 Hz loop
@@ -240,14 +239,24 @@ mosfet_off()
 polarity = -1 if i_check < 0 else 1
 print(f"Measured at 25% duty: {i_check:+.3f} A  (polarity: {'negative' if polarity < 0 else 'positive'})")
 
-# Pre-calculate initial duty
+while True:
+    try:
+        raw = input(f"Enter reference current in amps (0.1 to {MAX_CURRENT_A}): ").strip()
+        TARGET_A = float(raw)
+        if not (0.1 <= TARGET_A <= MAX_CURRENT_A):
+            print(f"  Value out of range. Enter a number between 0.1 and {MAX_CURRENT_A}.")
+            continue
+        break
+    except ValueError:
+        print("  Invalid input. Enter a number, e.g. 1.5")
+
 if abs(i_check) > 0.1:
     initial_duty = min(25.0 * TARGET_A / abs(i_check), 80.0)
 else:
     initial_duty = 10.0
 print(f"Initial duty estimate: {initial_duty:.1f}%\n")
 
-print(f"Starting PID control. Target: {polarity * TARGET_A:+.1f} A")
+print(f"Starting PI control. Target: {polarity * TARGET_A:+.2f} A")
 print("Press Ctrl+C to stop.\n")
 
 try:
