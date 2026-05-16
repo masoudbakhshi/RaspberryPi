@@ -25,7 +25,7 @@ Output voltage = VCC/2 + (Current x Sensitivity)
 
 At zero current the output sits at exactly **2.5 V** (half of VCC). Positive current raises it, negative current lowers it.
 
-> **Calibration note:** Generic ACS712 chips from Chinese suppliers are frequently clones whose actual sensitivity differs from the Allegro datasheet value. Always verify against a calibrated ammeter at a known operating point and adjust the `SENSITIVITY` constant in the script to match your specific chip. The datasheet value (100 mV/A for 20A, 185 mV/A for 5A) is a starting point only.
+> **Important — common GND:** If the ACS712 module is powered from a separate supply, its GND **must** be connected to Pi GND. A floating GND causes the ADC to read the wrong reference voltage, producing current readings that are 3–4× higher than the actual value. With all GNDs tied together, the datasheet sensitivity (100 mV/A for 20A) is correct with no further calibration needed.
 
 ---
 

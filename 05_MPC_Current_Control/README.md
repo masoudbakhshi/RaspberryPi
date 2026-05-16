@@ -138,6 +138,8 @@ Pi 3.3V     ----> ADS1263 AIN1  (differential reference)
 ADS1263 HAT: DRDY -> GPIO17  |  RST -> GPIO18  |  SPI0 -> GPIO 8/9/10/11
 ```
 
+> **All GND connections must be tied together** — Pi GND, 12V supply GND, D4184 GND, and ACS712 module GND. This is mandatory even if these components are powered from separate supplies. A floating GND on any external module causes the ADC to read the wrong reference, producing current readings 3–4× higher than the actual value.
+
 ---
 
 ## Dependencies

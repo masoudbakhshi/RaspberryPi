@@ -12,6 +12,11 @@
 #   ACS712 signal: ACS712 OUT -> ADS1263 AIN0 screw terminal
 #   2.5V reference: 10kΩ from 5V -> AIN1 screw terminal -> 10kΩ -> GND
 #
+# IMPORTANT — common GND:
+#   If the ACS712 is powered from a separate supply, its GND MUST be tied to Pi GND.
+#   A floating GND causes the ADC to read a wrong reference and gives completely
+#   incorrect current values (observed as 3-4x over-reading in testing).
+#
 # Why differential (AIN0 vs AIN1)?
 #   The ACS712 outputs 2.5V at zero current, which equals the ADS1263 internal
 #   2.5V reference. Measuring single-ended would saturate the ADC at zero current.
