@@ -48,7 +48,7 @@ At 15 mA: AIN0 = 2.5015V            -> differential = +1.5mV
 |------|---------|
 | Raspberry Pi (40-pin header) | Main board |
 | Waveshare ADS1263 ADC HAT | 32-bit ADC that reads ACS712 analog output over SPI |
-| AZDelivery ACS712 20A module | Current sensor |
+| AZDelivery ACS712 20A module | Current sensor — sensitivity verified at **0.100 V/A** (matches Allegro datasheet) |
 | Standard LED + 330 ohm resistor | Test load whose current we measure |
 | 2x 10 kohm resistors | Voltage divider that creates 2.5V reference for AIN1 |
 | Wires | |
