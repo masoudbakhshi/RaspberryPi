@@ -13,10 +13,10 @@
 #   AIN1 reference : Pi 3.3V (pin 1) -> ADS1263 AIN1
 #   ADS1263 RST    : GPIO18 | ADS1263 DRDY: GPIO17
 #
-# IMPORTANT — common GND (mandatory):
+# IMPORTANT: common GND is mandatory.
 #   Pi GND, ACS712 module GND, MOSFET module GND, and 12V supply GND must ALL
 #   be connected together. A floating GND on any external module causes the ADC
-#   to read a wrong reference — observed as a 3-4x current over-reading in testing.
+#   to read a wrong reference; observed as a 3 to 4 times current over-reading in testing.
 #
 # MOSFET safety:
 #   GPIO23 is configured LOW at Pi boot via /boot/firmware/config.txt
@@ -62,7 +62,7 @@ REG_INPMUX = 0x05
 REG_REFMUX = 0x0E
 
 # ACS712 20A
-SENSITIVITY = 0.100  # V/A  (ACS712 20A datasheet value — requires common GND between Pi and ACS712/MOSFET module)
+SENSITIVITY = 0.100  # V/A, ACS712 20A datasheet. Requires common GND between Pi and all external modules.
 VREF        = 2.5
 
 # PI parameters

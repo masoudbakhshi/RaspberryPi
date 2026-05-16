@@ -11,7 +11,7 @@
 This project controls the same lamp-and-MOSFET circuit from project 04 using a **Finite-Horizon Constrained MPC** instead of a PI controller. Before entering the control loop the script identifies the plant model from a live step test, precomputes the optimal gain matrix offline, and then runs a full constrained optimization at every sample (~480 Hz) in under a millisecond of Python time.
 
 The result is a controller that:
-- **Requires no manual gain tuning** — the model drives the response
+- **Requires no manual gain tuning**: the model drives the response
 - **Enforces hard constraints** on both the duty cycle and its rate of change
 - **Has zero steady-state error by construction** through the velocity (incremental) formulation
 - **Looks ahead 63 ms** into the predicted future at every step
@@ -46,7 +46,7 @@ A_aug = [[A, B],      B_aug = [[B],      C_aug = [1, 0]
           [0, 1]]               [1]]
 ```
 
-The `u_prev` state acts as a discrete integrator. Any constant disturbance or model mismatch accumulates in `u_prev` until the error is driven to zero — offset-free tracking without explicit anti-windup logic.
+The `u_prev` state acts as a discrete integrator. Any constant disturbance or model mismatch accumulates in `u_prev` until the error is driven to zero, giving offset-free tracking without any explicit anti-windup logic.
 
 ### Prediction over the horizon
 
@@ -82,7 +82,7 @@ K_mpc  (Nc × Np) : computed once after system ID, never changes
 E      (Np,)     : tracking error over the prediction horizon
 ```
 
-The online computation per sample is **one matrix-vector multiply** — no iterative solver.
+The online computation per sample is **one matrix-vector multiply**, with no iterative solver needed.
 
 ### Constraint projection
 
@@ -100,13 +100,13 @@ Only the first move is applied and the optimisation is repeated at the next samp
 ## Startup sequence
 
 ```
-1. ADC calibration    — measures zero-current voltage offset (MOSFET off, 1.5 s)
-2. Polarity detection — 25% open-loop pulse to determine current direction
-3. System ID          — 40% open-loop step, collects 200 samples, fits A and B
+1. ADC calibration    : measures zero-current voltage offset (MOSFET off, 1.5 s)
+2. Polarity detection : 25% open-loop pulse to determine current direction
+3. System ID          : 40% open-loop step, collects 200 samples, fits A and B
                         via least squares on  x[k+1] = A·x[k] + B·u
-4. MPC precomputation — builds F, Phi, K_mpc from identified model
-5. Setpoint entry     — user enters target current in amps
-6. Control loop       — ~480 Hz, receding-horizon MPC, live terminal display
+4. MPC precomputation : builds F, Phi, K_mpc from identified model
+5. Setpoint entry     : user enters target current in amps
+6. Control loop       : ~480 Hz, receding-horizon MPC, live terminal display
 ```
 
 ---
@@ -119,7 +119,7 @@ Identical to [04_MOSFET_Current_Control](../04_MOSFET_Current_Control/). No chan
 |------|---------|
 | Raspberry Pi (40-pin header) | Main board |
 | Waveshare ADS1263 ADC HAT | Reads ACS712 analog output over SPI |
-| AZDelivery ACS712 20A module | Current sensor — sensitivity **0.100 V/A** (ACS712 20A datasheet) |
+| AZDelivery ACS712 20A module | Current sensor, sensitivity **0.100 V/A** (ACS712 20A datasheet) |
 | DollaTek D4184 MOSFET module | Low-side switching of the 12V lamp load |
 | G4 Halogen Bulbs 12V 20W | Load |
 | 12V power supply (HW-140) | Powers the lamp circuit |
@@ -138,7 +138,7 @@ Pi 3.3V     ----> ADS1263 AIN1  (differential reference)
 ADS1263 HAT: DRDY -> GPIO17  |  RST -> GPIO18  |  SPI0 -> GPIO 8/9/10/11
 ```
 
-> **All GND connections must be tied together** — Pi GND, 12V supply GND, D4184 GND, and ACS712 module GND. This is mandatory even if these components are powered from separate supplies. A floating GND on any external module causes the ADC to read the wrong reference, producing current readings 3–4× higher than the actual value.
+> **All GND connections must be tied together:** Pi GND, 12V supply GND, D4184 GND, and ACS712 module GND. This is mandatory even if these components are powered from separate supplies. A floating GND on any external module causes the ADC to read the wrong reference, producing current readings 3 to 4 times higher than the actual value.
 
 ---
 
@@ -217,7 +217,7 @@ Stop with **Ctrl+C**. The MOSFET turns off immediately.
 | `DU_MAX` | 10 | Max duty-cycle step per sample (%). Limits slew rate regardless of Q/R. |
 | `SYSID_DUTY` | 40 | Open-loop duty during plant identification. Must produce a measurable, safe current. |
 
-> **Note:** Changing `NP`, `NC`, `Q_W`, or `R_W` only requires restarting the script — `K_mpc` is recomputed automatically from the fresh system ID at each run.
+> **Note:** Changing `NP`, `NC`, `Q_W`, or `R_W` only requires restarting the script. `K_mpc` is recomputed automatically from the fresh system ID at each run.
 
 ---
 
@@ -234,7 +234,7 @@ Stop with **Ctrl+C**. The MOSFET turns off immediately.
 
 ## Related tutorials in this repo
 
-- [`04_MOSFET_Current_Control`](../04_MOSFET_Current_Control/) — same hardware, PI controller — a good baseline to compare against
-- [`03_ACS712_Current_Sensor`](../03_ACS712_Current_Sensor/) — how the ACS712 and ADS1263 measure current
-- [`02_PWM_Dimming`](../02_PWM_Dimming/) — PWM basics
-- [`01_Blink_LED`](../01_Blink_LED/) — GPIO digital output basics
+- [`04_MOSFET_Current_Control`](../04_MOSFET_Current_Control/) covers the same hardware using a PI controller, a good baseline to compare against
+- [`03_ACS712_Current_Sensor`](../03_ACS712_Current_Sensor/) covers how the ACS712 and ADS1263 measure current
+- [`02_PWM_Dimming`](../02_PWM_Dimming/) covers PWM basics
+- [`01_Blink_LED`](../01_Blink_LED/) covers GPIO digital output basics

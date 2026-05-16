@@ -25,7 +25,7 @@ Output voltage = VCC/2 + (Current x Sensitivity)
 
 At zero current the output sits at exactly **2.5 V** (half of VCC). Positive current raises it, negative current lowers it.
 
-> **Important — common GND:** If the ACS712 module is powered from a separate supply, its GND **must** be connected to Pi GND. A floating GND causes the ADC to read the wrong reference voltage, producing current readings that are 3–4× higher than the actual value. With all GNDs tied together, the datasheet sensitivity (100 mV/A for 20A) is correct with no further calibration needed.
+> **Important: common GND required.** If the ACS712 module is powered from a separate supply, its GND must be connected to Pi GND. A floating GND causes the ADC to read the wrong reference voltage, producing current readings that are 3 to 4 times higher than the actual value. With all GNDs tied together, the datasheet sensitivity (100 mV/A for 20A) is correct with no further calibration needed.
 
 ---
 
@@ -48,7 +48,7 @@ At 15 mA: AIN0 = 2.5015V            -> differential = +1.5mV
 |------|---------|
 | Raspberry Pi (40-pin header) | Main board |
 | Waveshare ADS1263 ADC HAT | 32-bit ADC that reads ACS712 analog output over SPI |
-| AZDelivery ACS712 20A module | Current sensor — sensitivity verified at **0.100 V/A** (matches Allegro datasheet) |
+| AZDelivery ACS712 20A module | Current sensor, sensitivity verified at **0.100 V/A** (matches Allegro datasheet) |
 | Standard LED + 330 ohm resistor | Test load whose current we measure |
 | 2x 10 kohm resistors | Voltage divider that creates 2.5V reference for AIN1 |
 | Wires | |

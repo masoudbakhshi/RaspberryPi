@@ -12,10 +12,10 @@
 #   ACS712 signal: ACS712 OUT -> ADS1263 AIN0 screw terminal
 #   2.5V reference: 10kΩ from 5V -> AIN1 screw terminal -> 10kΩ -> GND
 #
-# IMPORTANT — common GND:
+# IMPORTANT: common GND required.
 #   If the ACS712 is powered from a separate supply, its GND MUST be tied to Pi GND.
 #   A floating GND causes the ADC to read a wrong reference and gives completely
-#   incorrect current values (observed as 3-4x over-reading in testing).
+#   incorrect current values (observed as 3 to 4 times over-reading in testing).
 #
 # Why differential (AIN0 vs AIN1)?
 #   The ACS712 outputs 2.5V at zero current, which equals the ADS1263 internal
@@ -28,7 +28,7 @@
 #   DRDY  -> GPIO17 (pin 11) -- do NOT use GPIO17 for anything else
 #   SPI0  -> GPIO8/9/10/11 (CE0, MISO, MOSI, SCLK)
 #
-# ACS712 20A sensitivity: 100 mV/A (verified with ammeter — this module matches datasheet)
+# ACS712 20A sensitivity: 100 mV/A, verified with ammeter. This module matches the Allegro datasheet.
 # =============================================================================
 
 import spidev
@@ -58,7 +58,7 @@ REG_INPMUX = 0x05   # input channel multiplexer
 REG_REFMUX = 0x0E   # reference source
 
 # ACS712 20A parameters
-SENSITIVITY = 0.100  # V/A  (verified with ammeter — this module matches the Allegro 20A datasheet)
+SENSITIVITY = 0.100  # V/A, verified with ammeter. Matches the Allegro ACS712-20A datasheet.
 VREF        = 2.5    # ADS1263 internal reference voltage
 
 # =============================================================================

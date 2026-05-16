@@ -52,7 +52,7 @@ This is the foundation of real-world power electronics control: variable-speed m
 |------|---------|
 | Raspberry Pi (40-pin header) | Main board |
 | Waveshare ADS1263 ADC HAT | Reads ACS712 analog output over SPI |
-| AZDelivery ACS712 20A module | Current sensor in the lamp circuit — sensitivity **0.100 V/A** (ACS712 20A datasheet) |
+| AZDelivery ACS712 20A module | Current sensor in the lamp circuit, sensitivity **0.100 V/A** (ACS712 20A datasheet) |
 | DollaTek D4184 MOSFET module | Low-side switching of the 12V lamp load |
 | G4 Halogen Bulbs 12V 20W | Load (4 lamps used in this setup) |
 | 12V power supply (HW-140) | Powers the lamp circuit |
@@ -82,7 +82,7 @@ ADS1263 HAT GPIO usage:
   DRDY -> GPIO17  |  RST -> GPIO18  |  SPI0 -> GPIO 8/9/10/11
 ```
 
-> **All GND connections must be tied together** — Pi GND, 12V supply GND, D4184 GND, and ACS712 module GND. This is mandatory even if these components are powered from separate supplies. A floating GND on any external module causes the ADC to read the wrong reference, producing current readings 3–4× higher than the actual value.
+> **All GND connections must be tied together:** Pi GND, 12V supply GND, D4184 GND, and ACS712 module GND. This is mandatory even if these components are powered from separate supplies. A floating GND on any external module causes the ADC to read the wrong reference, producing current readings 3 to 4 times higher than the actual value.
 
 ---
 
@@ -142,7 +142,7 @@ The gains Kp and Ki at the top of the script can be adjusted:
 
 ## Related tutorials in this repo
 
-- [`05_MPC_Current_Control`](../05_MPC_Current_Control/) applies MPC to the same hardware for model-based constrained optimal control — the natural next step from this project
+- [`05_MPC_Current_Control`](../05_MPC_Current_Control/) applies MPC to the same hardware for model-based constrained optimal control, the natural next step from this project
 - [`01_Blink_LED`](../01_Blink_LED/) covers GPIO digital output basics
 - [`02_PWM_Dimming`](../02_PWM_Dimming/) covers PWM LED brightness control
 - [`03_ACS712_Current_Sensor`](../03_ACS712_Current_Sensor/) covers current measurement with ACS712 and ADS1263
