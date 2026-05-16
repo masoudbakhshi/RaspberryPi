@@ -64,6 +64,7 @@ import lgpio
 import numpy as np
 import time
 import signal
+import atexit
 import sys
 
 # ── Hardware pins ─────────────────────────────────────────────────────────────
@@ -110,6 +111,44 @@ SYSID_SAMPLES = 200       # ADC readings collected during step test
 SYSID_TAU_MIN = 3e-3      # minimum allowed tau (s) -- prevents near-singular matrices
 
 MAX_CURRENT_A = 18.0      # ACS712 20 A module, 2 A safety margin
+
+# =============================================================================
+# Safe shutdown  -- registered BEFORE hardware init so any crash turns MOSFET off
+# =============================================================================
+
+h   = None   # set before GPIO init so shutdown handler can check
+spi = None
+
+_shutdown_done = False
+
+
+def safe_shutdown(signum=None, frame=None):
+    global _shutdown_done
+    if _shutdown_done:
+        return
+    _shutdown_done = True
+    try:
+        if h is not None:
+            lgpio.tx_pwm(h, MOSFET_PIN, 0, 0)
+            lgpio.gpio_write(h, MOSFET_PIN, 0)
+            lgpio.gpiochip_close(h)
+    except Exception:
+        pass
+    try:
+        if spi is not None:
+            spi.xfer2([CMD_STOP1])
+            spi.close()
+    except Exception:
+        pass
+    print("\nMOSFET off. Shutdown complete.")
+    sys.exit(0)
+
+
+signal.signal(signal.SIGINT,  safe_shutdown)
+signal.signal(signal.SIGTERM, safe_shutdown)
+signal.signal(signal.SIGHUP,  safe_shutdown)
+atexit.register(safe_shutdown)   # catches normal interpreter exit too
+
 
 # =============================================================================
 # Hardware initialisation
@@ -175,33 +214,6 @@ def ads_init():
     spi.xfer2([CMD_START1])
     time.sleep(0.5)
 
-
-# =============================================================================
-# Safe shutdown  (identical pattern to project 04)
-# =============================================================================
-
-_shutdown_done = False
-
-
-def safe_shutdown(signum=None, frame=None):
-    global _shutdown_done
-    if _shutdown_done:
-        return
-    _shutdown_done = True
-    try:
-        mosfet_off()
-        lgpio.gpiochip_close(h)
-        spi.xfer2([CMD_STOP1])
-        spi.close()
-    except Exception:
-        pass
-    print("\nMOSFET off. Shutdown complete.")
-    sys.exit(0)
-
-
-signal.signal(signal.SIGINT,  safe_shutdown)
-signal.signal(signal.SIGTERM, safe_shutdown)
-signal.signal(signal.SIGHUP,  safe_shutdown)
 
 
 # =============================================================================
