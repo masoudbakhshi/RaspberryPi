@@ -57,7 +57,7 @@ REG_INPMUX = 0x05
 REG_REFMUX = 0x0E
 
 # ACS712 20A
-SENSITIVITY = 0.339  # V/A  (empirically calibrated: module op-amp gain ~3.4x over datasheet 100 mV/A)
+SENSITIVITY = 0.100  # V/A  (ACS712 20A datasheet value — requires common GND between Pi and ACS712/MOSFET module)
 VREF        = 2.5
 
 # PI parameters
