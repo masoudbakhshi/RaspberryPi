@@ -1,5 +1,5 @@
 # =============================================================================
-# Closed-Loop MOSFET PI Current Controller: Raspberry Pi Tutorial
+# Closed-Loop PI Current Controller: Raspberry Pi Tutorial
 # Author  : Masoud Bakhshi
 # Date    : 2026-05-15
 # Hardware: Raspberry Pi + Waveshare ADS1263 HAT + ACS712 20A

@@ -1,4 +1,4 @@
-# 04: MOSFET PWM Closed-Loop Current Controller
+# 04: Closed-Loop PI Current Controller
 
 **Author:** Masoud Bakhshi  
 **Level:** Intermediate to Advanced  
