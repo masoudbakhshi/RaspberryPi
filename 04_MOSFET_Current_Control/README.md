@@ -142,6 +142,7 @@ The gains Kp and Ki at the top of the script can be adjusted:
 
 ## Related tutorials in this repo
 
+- [`05_MPC_Current_Control`](../05_MPC_Current_Control/) applies MPC to the same hardware for model-based constrained optimal control — the natural next step from this project
 - [`01_Blink_LED`](../01_Blink_LED/) covers GPIO digital output basics
 - [`02_PWM_Dimming`](../02_PWM_Dimming/) covers PWM LED brightness control
 - [`03_ACS712_Current_Sensor`](../03_ACS712_Current_Sensor/) covers current measurement with ACS712 and ADS1263
