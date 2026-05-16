@@ -23,7 +23,7 @@
 #   DRDY  -> GPIO17 (pin 11) -- do NOT use GPIO17 for anything else
 #   SPI0  -> GPIO8/9/10/11 (CE0, MISO, MOSI, SCLK)
 #
-# ACS712 20A sensitivity: 100 mV/A
+# ACS712 20A sensitivity: empirically calibrated to 339 mV/A (clone chip — datasheet value is 100 mV/A)
 # =============================================================================
 
 import spidev
@@ -53,7 +53,7 @@ REG_INPMUX = 0x05   # input channel multiplexer
 REG_REFMUX = 0x0E   # reference source
 
 # ACS712 20A parameters
-SENSITIVITY = 0.100  # V/A (100 mV per amp)
+SENSITIVITY = 0.339  # V/A  (empirically calibrated: clone chip reads 3.4x higher than Allegro datasheet)
 VREF        = 2.5    # ADS1263 internal reference voltage
 
 # =============================================================================
