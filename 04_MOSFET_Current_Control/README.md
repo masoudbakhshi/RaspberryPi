@@ -52,7 +52,7 @@ This is the foundation of real-world power electronics control: variable-speed m
 |------|---------|
 | Raspberry Pi (40-pin header) | Main board |
 | Waveshare ADS1263 ADC HAT | Reads ACS712 analog output over SPI |
-| AZDelivery ACS712 20A module | Current sensor in the lamp circuit — sensitivity calibrated to **0.339 V/A** (module has on-board op-amp; datasheet value is 0.100 V/A) |
+| AZDelivery ACS712 20A module | Current sensor in the lamp circuit — sensitivity calibrated to **0.339 V/A** (clone chip; datasheet value is 0.100 V/A — always verify with an ammeter) |
 | DollaTek D4184 MOSFET module | Low-side switching of the 12V lamp load |
 | G4 Halogen Bulbs 12V 20W | Load (4 lamps used in this setup) |
 | 12V power supply (HW-140) | Powers the lamp circuit |

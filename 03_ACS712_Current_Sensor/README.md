@@ -25,7 +25,7 @@ Output voltage = VCC/2 + (Current x Sensitivity)
 
 At zero current the output sits at exactly **2.5 V** (half of VCC). Positive current raises it, negative current lowers it.
 
-> **Calibration note:** Many ACS712 breakout modules sold by generic suppliers include an on-board op-amp that amplifies the output before the terminal. This raises the effective sensitivity well above the datasheet value. Always verify with a known reference (e.g. a calibrated ammeter) and adjust the `SENSITIVITY` constant in the script to match your specific module.
+> **Calibration note:** Generic ACS712 chips from Chinese suppliers are frequently clones whose actual sensitivity differs from the Allegro datasheet value. Always verify against a calibrated ammeter at a known operating point and adjust the `SENSITIVITY` constant in the script to match your specific chip. The datasheet value (100 mV/A for 20A, 185 mV/A for 5A) is a starting point only.
 
 ---
 
