@@ -119,7 +119,7 @@ Identical to [04_MOSFET_Current_Control](../04_MOSFET_Current_Control/). No chan
 |------|---------|
 | Raspberry Pi (40-pin header) | Main board |
 | Waveshare ADS1263 ADC HAT | Reads ACS712 analog output over SPI |
-| AZDelivery ACS712 20A module | Current sensor — sensitivity calibrated to **0.339 V/A** (clone chip; datasheet value is 0.100 V/A — always verify with an ammeter) |
+| AZDelivery ACS712 20A module | Current sensor — sensitivity **0.100 V/A** (ACS712 20A datasheet) |
 | DollaTek D4184 MOSFET module | Low-side switching of the 12V lamp load |
 | G4 Halogen Bulbs 12V 20W | Load |
 | 12V power supply (HW-140) | Powers the lamp circuit |
