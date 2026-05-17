@@ -28,7 +28,7 @@ A collection of hands-on Raspberry Pi projects aimed at students and engineers w
 | 02 | [02_PWM_Dimming](02_PWM_Dimming/) | PWM for LED brightness control | Beginner to Intermediate |
 | 03 | [03_ACS712_Current_Sensor](03_ACS712_Current_Sensor/) | ACS712 current sensing via ADS1263 over SPI | Intermediate |
 | 04 | [04_MOSFET_Current_Control](04_MOSFET_Current_Control/) | Closed-loop PI current controller with D4184 MOSFET | Intermediate to Advanced |
-| 05 | [05_MPC_Current_Control](05_MPC_Current_Control/) | Finite-horizon constrained MPC current controller — same hardware as 04, model-based optimal control | Advanced |
+| 05 | [05_MPC_Current_Control](05_MPC_Current_Control/) | Finite-horizon constrained MPC current controller: same hardware as 04, model-based optimal control | Advanced |
 
 More projects are added over time as the series grows.
 
